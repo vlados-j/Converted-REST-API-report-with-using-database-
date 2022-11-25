@@ -5,6 +5,7 @@ from dict2xml import dict2xml
 from flasgger import Swagger
 from models import db, RacerTable, ReportTable
 from peewee import IntegrityError
+from itertools import chain
 
 app = Flask(__name__)
 api = Api(app)
@@ -129,14 +130,9 @@ def info_for_output(ordering):
         {racer.abbreviation.name: {'place': racer.place,
                                    'name': racer.abbreviation.name,
                                    'team': racer.abbreviation.team,
-                                   'lap_time': racer.abbreviation.lap_time.strftime("%-M:%S:%f")[:-3]}}
-        for racer in query_for_valid_racers
+                                   'lap_time': racer.abbreviation.lap_time_str()}}
+        for racer in list(chain(query_for_valid_racers, query_for_other_racers))
     ]
-    for racer in query_for_other_racers:
-        info_for_api.append({racer.abbreviation.name: {'place': racer.place,
-                                                       'name': racer.abbreviation.name,
-                                                       'team': racer.abbreviation.team,
-                                                       'lap_time': racer.abbreviation.lap_time}})
     return info_for_api
 
 

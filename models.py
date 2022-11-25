@@ -1,4 +1,5 @@
 from peewee import *
+import datetime
 
 
 db = SqliteDatabase('database.db')
@@ -19,6 +20,9 @@ class RacerTable(BaseModel):
 
     class Meta:
         db_table = 'Racers'
+
+    def lap_time_str(self):
+        return self.lap_time.strftime("%-M:%S:%f")[:-3] if self.lap_time else '-'
 
 
 class ReportTable(BaseModel):
