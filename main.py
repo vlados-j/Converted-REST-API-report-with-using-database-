@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify, Response
 from flask_restful import Api, Resource
-from application_vlados import processing_data, build_report
+from application_vlados import processing_data
 from dict2xml import dict2xml
 from flasgger import Swagger
 from models import db, RacerTable, ReportTable
@@ -72,13 +72,7 @@ class Report(Resource):
             description: Racers report
         """
         args = request.args
-        if args.get("order") == 'desc':
-            query_for_valid_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time != None) \
-                .order_by(ReportTable.place.desc())
-        else:
-            query_for_valid_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time != None)
-        query_for_other_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time == None)
-        prepared_info_for_report = info_for_output(query_for_valid_racers, query_for_other_racers)
+        prepared_info_for_report = info_for_output(args.get("order"))
         return generate_output_data(prepared_info_for_report, args.get("format"))
 
 
@@ -115,13 +109,7 @@ class Drivers(Resource):
                                              'lap_time': racer.lap_time.strftime("%-M:%S:%f")[:-3]
                                              if racer.lap_time else None}}
             return generate_output_data(info_about_racer, args.get("format"))
-        if args.get("order") == 'desc':
-            query_for_valid_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time != None) \
-                .order_by(ReportTable.place.desc())
-        else:
-            query_for_valid_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time != None)
-        query_for_other_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time == None)
-        prepared_info_for_report = info_for_output(query_for_valid_racers, query_for_other_racers)
+        prepared_info_for_report = info_for_output(args.get("order"))
         return generate_output_data(prepared_info_for_report, args.get("format"))
 
 
@@ -132,7 +120,11 @@ def generate_output_data(info_for_api, format_for_output):
         return jsonify(info_for_api)
 
 
-def info_for_output(query_for_valid_racers, query_for_other_racers):
+def info_for_output(ordering):
+    query_for_valid_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time != None)
+    if ordering == 'desc':
+        query_for_valid_racers = query_for_valid_racers.order_by(ReportTable.place.desc())
+    query_for_other_racers = ReportTable.select().join(RacerTable).where(RacerTable.lap_time == None)
     info_for_api = [
         {racer.abbreviation.name: {'place': racer.place,
                                    'name': racer.abbreviation.name,
