@@ -131,7 +131,7 @@ def info_for_output(ordering):
                                    'name': racer.abbreviation.name,
                                    'team': racer.abbreviation.team,
                                    'lap_time': racer.abbreviation.lap_time_str()}}
-        for racer in list(chain(query_for_valid_racers, query_for_other_racers))
+        for racer in chain(query_for_valid_racers, query_for_other_racers)
     ]
     return info_for_api
 
