@@ -38,16 +38,15 @@ def from_files_to_db(start_path, finish_path, abbreviations_path):
         sorted_info = sorted(structured_info.values())
         number_of_valid_racers = len([None for racer in sorted_info if racer.lap_time])
         racer_number_sequence = iter(range(1, number_of_valid_racers + 1))
-        with db.atomic():
-            for racer in sorted_info:
-                driver = RacerTable.create(abbreviation=racer.abbreviation, name=racer.name, team=racer.team,
-                                           start_time=racer.start_time, finish_time=racer.finish_time,
-                                           lap_time=racer.lap_time)
-                if racer.lap_time:
-                    racer.place = next(racer_number_sequence)
-                    ReportTable.create(abbreviation=driver, place=racer.place)
-                else:
-                    ReportTable.create(abbreviation=driver, place=None)
+        for racer in sorted_info:
+            driver = RacerTable.create(abbreviation=racer.abbreviation, name=racer.name, team=racer.team,
+                                       start_time=racer.start_time, finish_time=racer.finish_time,
+                                       lap_time=racer.lap_time)
+            if racer.lap_time:
+                racer.place = next(racer_number_sequence)
+                ReportTable.create(abbreviation=driver, place=racer.place)
+            else:
+                ReportTable.create(abbreviation=driver, place=None)
     except IntegrityError:
         pass
 
