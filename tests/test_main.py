@@ -3,7 +3,7 @@ from application_vlados import Racer
 import datetime
 from unittest.mock import patch
 from main import info_for_output, from_files_to_db
-from models import ReportTable, RacerTable
+from models import ReportTable, RacerTable, db
 from peewee import *
 
 """
@@ -23,7 +23,7 @@ test_db = SqliteDatabase(':memory:')
 
 
 def setup_db():
-    test_db.bind(MODELS, bind_refs=False, bind_backrefs=False)
+    test_db.bind(MODELS)
 
     test_db.connect()
     test_db.create_tables(MODELS)
@@ -42,8 +42,7 @@ def client():
 
 
 @patch('main.processing_data')
-@patch('main.db')
-def test_from_files_to_db(mocked_db, mocked_processing_data):
+def test_from_files_to_db(mocked_processing_data):
     mocked_processing_data.return_value = {'Sebastian Vettel':
                                                Racer('Sebastian Vettel', 'SVF', 'FERRARI',
                                                      datetime.datetime(2018, 5, 24, 12, 2, 58, 917),
@@ -51,11 +50,9 @@ def test_from_files_to_db(mocked_db, mocked_processing_data):
                                            'Daniel Ricciardo':
                                                Racer('Daniel Ricciardo', 'DRR', 'RED BULL RACING TAG HEUER', None,
                                                      None)}
-    mocked_db.return_value = test_db
-    setup_db()
-    from_files_to_db('fake/file/path', 'fake/file/path', 'fake/file/path')
-    assert RacerTable.get(RacerTable.abbreviation == 'SVF') == 'SVF'
-    tear_down_db()
+    with test_db.bind_ctx(MODELS):
+        from_files_to_db('fake/file/path', 'fake/file/path', 'fake/file/path')
+        assert RacerTable.get(RacerTable.abbreviation == 'SVF') == 'SVF'
 
 
 def test_report():
