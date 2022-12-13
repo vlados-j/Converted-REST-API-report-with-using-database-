@@ -3,7 +3,7 @@ from application_vlados import Racer
 import datetime
 from unittest.mock import patch
 from main import info_for_output, from_files_to_db
-from models import ReportTable, RacerTable, db
+from models import ReportTable, RacerTable
 from peewee import *
 
 """
@@ -13,8 +13,6 @@ Report
 Drivers
 generate_output_data
 create_tables
-before_request
-after_request
 """
 
 MODELS = [RacerTable, ReportTable]
@@ -22,8 +20,9 @@ MODELS = [RacerTable, ReportTable]
 test_db = SqliteDatabase(':memory:')
 
 
+# @pytest.fixture(autouse=True, scope='session')
 def setup_db():
-    test_db.bind(MODELS)
+    test_db.bind(MODELS, bind_refs=False, bind_backrefs=False)
 
     test_db.connect()
     test_db.create_tables(MODELS)
@@ -43,6 +42,7 @@ def client():
 
 @patch('main.processing_data')
 def test_from_files_to_db(mocked_processing_data):
+    setup_db()
     mocked_processing_data.return_value = {'Sebastian Vettel':
                                                Racer('Sebastian Vettel', 'SVF', 'FERRARI',
                                                      datetime.datetime(2018, 5, 24, 12, 2, 58, 917),
@@ -50,9 +50,13 @@ def test_from_files_to_db(mocked_processing_data):
                                            'Daniel Ricciardo':
                                                Racer('Daniel Ricciardo', 'DRR', 'RED BULL RACING TAG HEUER', None,
                                                      None)}
-    with test_db.bind_ctx(MODELS):
-        from_files_to_db('fake/file/path', 'fake/file/path', 'fake/file/path')
-        assert RacerTable.get(RacerTable.abbreviation == 'SVF') == 'SVF'
+    from_files_to_db('fake/file/path', 'fake/file/path', 'fake/file/path')
+    RacerTable.create(abbreviation='QWE', name='SSSebastian Vettel', team='FERRARI',
+                      start_time=datetime.datetime(2018, 5, 24, 12, 2, 58, 917),
+                      finish_time=datetime.datetime(2018, 5, 24, 12, 2, 3, 332),
+                      lap_time=datetime.time(0, 1, 4, 415000))
+    assert RacerTable.get(RacerTable.abbreviation == 'QWEe').name == 'SSSebastian Vettel'
+    tear_down_db()
 
 
 def test_report():
@@ -108,12 +112,4 @@ def test_info_for_output(ordering, expected_result):
 
 
 def test_create_tables():
-    pass
-
-
-def test_before_request():
-    pass
-
-
-def test_after_request():
     pass

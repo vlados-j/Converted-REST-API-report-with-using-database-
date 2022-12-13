@@ -17,15 +17,15 @@ def create_tables():
         db.create_tables([RacerTable, ReportTable])
 
 
-@app.before_request
-def before_request():
-    db.connect()
-
-
-@app.after_request
-def after_request(response):
-    db.close()
-    return response
+# @app.before_request
+# def before_request():
+#     db.connect()
+#
+#
+# @app.after_request
+# def after_request(response):
+#     db.close()
+#     return response
 
 
 def from_files_to_db(start_path, finish_path, abbreviations_path):
